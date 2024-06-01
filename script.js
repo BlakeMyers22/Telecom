@@ -165,7 +165,6 @@ document.getElementById('buyButton').addEventListener('click', async () => {
     const bnbRate = await fetchBNBRate();
     if (bnbRate && typeof window.ethereum !== 'undefined' && window.web3) {
         const web3 = new Web3(window.ethereum);
-        const contract = new web3.eth.Contract(usdcContractABI, usdcContractAddress);
         const usdAmount = document.getElementById('amountUSD').value;
         const bnbAmount = usdAmount / bnbRate;
         const valueInWei = web3.utils.toWei(bnbAmount.toString(), 'ether');

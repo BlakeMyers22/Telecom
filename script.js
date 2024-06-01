@@ -13,48 +13,55 @@ document.getElementById('connectButton').addEventListener('click', async () => {
     }
 });
 
-const contractAddress = '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d';
-const contractABI = [
+const usdcContractAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606EB48';
+const usdcContractABI = [
     {
-        "constant": false,
+        "constant": true,
         "inputs": [],
-        "name": "buyTokens",
-        "outputs": [],
-        "payable": true,
-        "stateMutability": "payable",
+        "name": "name",
+        "outputs": [
+            {
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
         "type": "function"
-    }
+    },
+    // ... more entries
 ];
 
-async function fetchBNBRate() {
-    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=USD');
+async function fetchETHUSDPrice() {
+    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
     const data = await response.json();
-    return data.binancecoin.usd;
+    return data.ethereum.usd;
 }
 
 document.getElementById('buyButton').addEventListener('click', async () => {
-    const bnbRate = await fetchBNBRate();
-    if (bnbRate && typeof window.ethereum !== 'undefined' && window.web3) {
+    const ethUsdPrice = await fetchETHUSDPrice();
+    if (ethUsdPrice && typeof window.ethereum !== 'undefined' && window.web3) {
         const web3 = new Web3(window.ethereum);
-        const contract = new web3.eth.Contract(contractABI, contractAddress);
+        const contract = new web3.eth.Contract(usdcContractABI, usdcContractAddress);
         const usdAmount = document.getElementById('amountUSD').value;
-        const bnbAmount = usdAmount / bnbRate;
-        const valueInWei = web3.utils.toWei(bnbAmount.toString(), 'ether');
+        const ethAmount = usdAmount / ethUsdPrice;
+        const valueInWei = web3.utils.toWei(ethAmount.toString(), 'ether');
 
         try {
             const accounts = await web3.eth.getAccounts();
-            const receipt = await contract.methods.buyTokens().send({
+            const transaction = await web3.eth.sendTransaction({
                 from: accounts[0],
+                to: usdcContractAddress,
                 value: valueInWei,
-                gas: 300000 // Adjust the gas limit as needed
+                gas: 300000
             });
-            console.log('Transaction successful: ', receipt);
+            console.log('Transaction successful: ', transaction);
+            document.getElementById('status').innerText = `Transaction successful: ${transaction.transactionHash}`;
         } catch (error) {
             console.error('Transaction failed: ', error);
             document.getElementById('status').innerText = `Transaction failed: ${error.message}`;
         }
     } else {
-        console.log('MetaMask is not installed or the web3 instance is not available.');
         document.getElementById('status').innerText = 'MetaMask is not installed or the web3 instance is not available.';
     }
 });
